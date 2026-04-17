@@ -5,14 +5,14 @@ let produtoAtual = null;
 carregarProdutos();
 
 function carregarProdutos() {
-    fetch(url + '/produtos')
+    fetch(url + '/listar')
         .then(response => response.json())
         .then(data => {
             produtos.length = 0;
             produtos.push(...data);
             listarCards();
         })
-        .catch(e => alert('Problemas com a conexão da API'));
+        .catch(() => alert('Problemas com a conexão da API'));
 }
 
 function listarCards() {
@@ -24,94 +24,99 @@ function listarCards() {
         card.classList.add('card');
 
         card.innerHTML = `
-        <h3>${produto.nome}</h3>
-        <img src="${produto.img}"alt="${produto.nome}">
-        <p>Custo Aproximado: ${produto.custoAproximado}</p>
+            <h3>${produto.nome}</h3>
+            <img src="${produto.imagem}" alt="${produto.nome}">
+            <p>Preço: R$ ${produto.preco}</p>
         `;
-        card.onclick = () => abrirReceita(produto);
+
+        card.onclick = () => abrirProduto(produto);
         container.appendChild(card);
     });
 }
 
-function abrirReceita(produto) {
+function abrirProduto(produto) {
     produtoAtual = produto;
-    tituloReceita.innerHTML = produto.nome;
-    nomeEdit.value = produto.nome;
-    imgReceita.src = produto.img;
-    imgEdit.value = produto.img;
-    tipoEdit.value = produto.tipo;
-    ingredientesEdit.value = produto.ingredientes;
-    modoEdit.value = produto.modoFazer;
-    custoEdit.value = produto.custoAproximado ?? '';
-    detalhes.classList.remove('oculto');
+
+    document.getElementById("tituloProduto").innerText = produto.nome;
+    document.getElementById("imgProduto").src = produto.imagem;
+
+    document.getElementById("nomeEdit").value = produto.nome;
+    document.getElementById("imgEdit").value = produto.imagem;
+    document.getElementById("precoEdit").value = produto.preco;
+    document.getElementById("categotiaEdit").value = produto.categoria;
+    document.getElementById("marcaEdit").value = produto.marca;
+
+    document.getElementById("detalhes").classList.remove('oculto');
 }
 
-imgEdit.addEventListener("input", () => {
-    imgReceita.src = imgEdit.value;
+document.getElementById("imgEdit").addEventListener("input", () => {
+    document.getElementById("imgProduto").src = document.getElementById("imgEdit").value;
 });
 
 document.querySelector("#formCad").addEventListener('submit', function (e) {
     e.preventDefault();
-    const novaReceita = {
-        nome: nome.value,
-        tipo: tipo.value,
-        ingredientes: ingredientes.value,
-        modoFazer: modoFazer.value,
-        img: urlImagem.value,
-        custoAproximado: custoAproximado.value ? Number(custoAproximado.value) : null
+
+    const novoProduto = {
+        nome: document.getElementById("nome").value,
+        imagem: document.getElementById("urlImagem").value,
+        preco: Number(document.getElementById("preco").value),
+        categoria: document.getElementById("categotia").value,
+        marca: document.getElementById("marca").value
     };
-    fetch(url + "/produtos", {
+
+    fetch(url + "/cadastrar", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(novaReceita)
+        body: JSON.stringify(novoProduto)
     })
         .then(() => {
-            alert("Receita adicionada com sucesso!");
-            cadastro.classList.add('oculto');
+            alert("Produto adicionado com sucesso!");
+            document.getElementById("cadastro").classList.add('oculto');
             carregarProdutos();
         })
-        .catch(() => alert("Erro ao salvar produto!"))
+        .catch(() => alert("Erro ao salvar produto!"));
 });
 
-function salvarEdicao(){
-    const  receitaEditada = {
-        nome: nomeEdit.value,
-        tipo: tipoEdit.value,
-        ingredientes: ingredientesEdit.value,
-        modoFazer: modoEdit.value,
-        img: imgEdit.value,
-        custoAproximado: custoEdit.value ? Number(custoEdit.value) : null
-    }
-    fetch(url + "/produtos/" + produtoAtual.id , {
+function salvarEdicao() {
+    const produtoEditado = {
+        nome: document.getElementById("nomeEdit").value,
+        imagem: document.getElementById("imgEdit").value,
+        preco: Number(document.getElementById("precoEdit").value),
+        categoria: document.getElementById("categotiaEdit").value,
+        marca: document.getElementById("marcaEdit").value
+    };
+
+    fetch(url + "/atualizar/" + produtoAtual.id, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(receitaEditada)
+        body: JSON.stringify(produtoEditado)
     })
         .then(res => {
-            if(!res.ok) throw new Error();
+            if (!res.ok) throw new Error();
             return res.json();
         })
-        .then(()=> {
-            alert("Receita atualizada com sucesso!");
-            detalhes.classList.add("oculto");
+        .then(() => {
+            alert("Produto atualizado com sucesso!");
+            document.getElementById("detalhes").classList.add("oculto");
             carregarProdutos();
         })
         .catch(() => alert("Erro ao editar produto!"));
 }
 
-function excluirReceitaAtual(){
-    if(!confirm("Deseja excluir a produto?")) return;
-    fetch(url + '/produtos/' + produtoAtual.id , {
+function excluirProdutoAtual() {
+    if (!confirm("Deseja excluir o produto?")) return;
+
+    fetch(url + "/excluir/" + produtoAtual.id, {
         method: 'DELETE'
     })
-    .then(() => {
-        alert("Receita excluida com sucesso!");
-        detalhes.classList.add("oculto");
-        carregarProdutos();
-    })
-    .catch(()=> alert("Erro ao excluir a produto!"))
+        .then(() => {
+            alert("Produto excluído com sucesso!");
+            document.getElementById("detalhes").classList.add("oculto");
+            carregarProdutos();
+        })
+        .catch(() => alert("Erro ao excluir produto!"));
 }
